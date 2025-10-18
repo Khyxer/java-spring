@@ -1,0 +1,18 @@
+
+ENLACE DEL REPOSITORIO
+======================
+
+Repositorio GitHub: https://github.com/Khyxer/java-spring
+
+Branch principal: main
+
+Fecha de último commit: [Coloca la fecha actual]
+
+Hash del último commit: [Ejecuta: git log -1 --format=%H]
+
+Instrucciones de clonación:
+git clone https://github.com/Khyxer/java-spring.git
+
+Desarrollado por: GRUPO NOVA 348
+Ficha: 2977348
+Evidencia: GA7-220501096-AA3-EV01

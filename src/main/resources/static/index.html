@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Productos - Spring Boot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #cdcdcd;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-eliminar {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+
+        .productos-lista {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .producto-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .producto-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .producto-nombre {
+            font-size: 1.5em;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .producto-precio {
+            font-size: 1.3em;
+            color: #f5576c;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .producto-descripcion {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .mensaje {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .mensaje.exito {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .mensaje.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🛒 Gestión de Productos</h1>
+
+    <div id="mensaje" class="mensaje"></div>
+
+    <div class="form-section">
+        <h2>➕ Agregar Nuevo Producto</h2>
+        <div class="form-group">
+            <label for="nombre">Nombre del Producto:</label>
+            <input type="text" id="nombre" placeholder="Ej: Laptop Gamer">
+        </div>
+        <div class="form-group">
+            <label for="precio">Precio:</label>
+            <input type="number" id="precio" step="0.01" placeholder="Ej: 1500.00">
+        </div>
+        <div class="form-group">
+            <label for="descripcion">Descripción:</label>
+            <textarea id="descripcion" rows="3" placeholder="Ej: Laptop gaming con RTX 3060"></textarea>
+        </div>
+        <button onclick="crearProducto()">Crear Producto</button>
+    </div>
+
+    <div>
+        <h2>📦 Lista de Productos</h2>
+        <button onclick="cargarProductos()" style="margin-bottom: 20px;">🔄 Recargar Lista</button>
+        <div id="productos" class="productos-lista"></div>
+    </div>
+</div>
+
+<script>
+    // URL base de la API
+    const API_URL = 'http://localhost:8080/api/productos';
+
+    // Cargar productos al iniciar la página
+    window.onload = function() {
+        cargarProductos();
+    };
+
+    // Función para mostrar mensajes
+    function mostrarMensaje(texto, tipo) {
+        const mensaje = document.getElementById('mensaje');
+        mensaje.textContent = texto;
+        mensaje.className = 'mensaje ' + tipo;
+        mensaje.style.display = 'block';
+        setTimeout(() => {
+            mensaje.style.display = 'none';
+        }, 3000);
+    }
+
+    // Crear nuevo producto
+    async function crearProducto() {
+        const nombre = document.getElementById('nombre').value;
+        const precio = document.getElementById('precio').value;
+        const descripcion = document.getElementById('descripcion').value;
+
+        if (!nombre || !precio) {
+            mostrarMensaje('Por favor completa todos los campos obligatorios', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    nombre: nombre,
+                    precio: parseFloat(precio),
+                    descripcion: descripcion
+                })
+            });
+
+            if (response.ok) {
+                mostrarMensaje('Producto creado exitosamente', 'exito');
+                document.getElementById('nombre').value = '';
+                document.getElementById('precio').value = '';
+                document.getElementById('descripcion').value = '';
+                cargarProductos();
+            } else {
+                mostrarMensaje('Error al crear el producto', 'error');
+            }
+        } catch (error) {
+            mostrarMensaje('Error de conexión: ' + error, 'error');
+        }
+    }
+
+    // Cargar todos los productos
+    async function cargarProductos() {
+        try {
+            const response = await fetch(API_URL);
+            const productos = await response.json();
+
+            const contenedor = document.getElementById('productos');
+
+            if (productos.length === 0) {
+                contenedor.innerHTML = '<p style="text-align: center; color: #999;">No hay productos registrados</p>';
+                return;
+            }
+
+            contenedor.innerHTML = productos.map(producto => `
+                <div class="producto-card">
+                    <div class="producto-nombre">${producto.nombre}</div>
+                    <div class="producto-precio">$${producto.precio.toFixed(2)}</div>
+                    <div class="producto-descripcion">${producto.descripcion || 'Sin descripción'}</div>
+                    <button class="btn-eliminar" onclick="eliminarProducto(${producto.id})">
+                        🗑️ Eliminar
+                    </button>
+                </div>
+            `).join('');
+        } catch (error) {
+            mostrarMensaje('Error al cargar productos: ' + error, 'error');
+        }
+    }
+
+    // Eliminar producto
+    async function eliminarProducto(id) {
+        if (!confirm('¿Estás seguro de eliminar este producto?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                mostrarMensaje('Producto eliminado exitosamente', 'exito');
+                cargarProductos();
+            } else {
+                mostrarMensaje('Error al eliminar el producto', 'error');
+            }
+        } catch (error) {
+            mostrarMensaje('Error de conexión: ' + error, 'error');
+        }
+    }
+</script>
+</body>
+</html>
